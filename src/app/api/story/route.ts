@@ -1,3 +1,5 @@
+
+
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -6,6 +8,10 @@ export async function POST(req: Request) {
 
     if (!idea) {
       return NextResponse.json({ error: 'Veuillez entrer une idée d\'histoire.' }, { status: 400 });
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: 'Clé GROQ_API_KEY manquante sur Vercel.' }, { status: 500 });
     }
 
     const response = await fetch('https://groq.com', {
@@ -48,13 +54,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: data.error?.message || 'Erreur API Groq' }, { status: 500 });
     }
 
-    const firstChoice = Array.isArray(data.choices) ? data.choices[0] : null;
-    const rawText = firstChoice?.message?.content || '{}';
+    const rawText = data.choices?.at(0)?.message?.content || '{}';
     const content = JSON.parse(rawText);
 
     return NextResponse.json(content);
-  } catch (error) {
-    return NextResponse.json({ error: 'Erreur lors de la génération du scénario.' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error?.message || 'Erreur lors de la génération du scénario.' }, { status: 500 });
   }
-}
-
+        }
+  
