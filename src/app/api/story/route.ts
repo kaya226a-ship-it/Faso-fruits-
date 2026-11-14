@@ -1,5 +1,3 @@
-
-
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -25,25 +23,26 @@ export async function POST(req: Request) {
         messages: [
           {
             role: 'system',
-            content: `Tu es le scénariste en chef du studio d'animation FASO FRUITS. Transforme l'idée de l'utilisateur en un scénario structuré de 12 scènes de 6 secondes chacune. Réponds UNIQUEMENT avec un objet JSON valide sans aucun texte autour, suivant exactement ce modèle :
+            content: `Tu es le scénariste en chef du studio FASO FRUITS. Transforme l'idée en un scénario de 12 scènes de 6 secondes. Réponds UNIQUEMENT avec un objet JSON valide suivant ce modèle exact :
             {
-              "title": "Titre accrocheur de l'épisode",
+              "title": "Titre de l'épisode",
               "scenes": [
                 {
                   "order": 1,
                   "duration": "6s",
-                  "visual": "Description visuelle très précise en français (cadrage, décor, action, émotion du personnage, style ${style})",
-                  "dialogue": "Dialogue naturel en français de 14 mots maximum"
+                  "visual": "Description visuelle concise en français (style ${style})",
+                  "dialogue": "Dialogue en français (12 mots max)"
                 }
               ]
             }`
           },
           {
             role: 'user',
-            content: `Idée de l'histoire : ${idea}. Style visuel : ${style}. Génère les 12 scènes.`
+            content: `Histoire : ${idea}. Style : ${style}. Génère exactement 12 scènes courtes.`
           }
         ],
         temperature: 0.7,
+        max_tokens: 4000,
         response_format: { type: 'json_object' }
       }),
     });
@@ -59,7 +58,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(content);
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Erreur lors de la génération du scénario.' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Erreur lors de la génération.' }, { status: 500 });
   }
-        }
-  
+}
+
