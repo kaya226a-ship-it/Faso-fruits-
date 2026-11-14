@@ -43,10 +43,18 @@ export async function POST(req: Request) {
     });
 
     const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
+
+    if (!response.ok) {
+      return NextResponse.json({ error: data.error?.message || 'Erreur API Groq' }, { status: 500 });
+    }
+
+    const firstChoice = Array.isArray(data.choices) ? data.choices[0] : null;
+    const rawText = firstChoice?.message?.content || '{}';
+    const content = JSON.parse(rawText);
 
     return NextResponse.json(content);
   } catch (error) {
     return NextResponse.json({ error: 'Erreur lors de la génération du scénario.' }, { status: 500 });
   }
-              }
+}
+
