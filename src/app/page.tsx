@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Film, Sparkles, User, Play, Plus, Video, Mic, Download } from "lucide-react";
+import { Film, Sparkles, Play, Plus } from "lucide-react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -14,6 +14,7 @@ export default function FasoFruitsStudio() {
   const [password, setPassword] = useState("");
   const [storyIdea, setStoryIdea] = useState("");
   const [style, setStyle] = useState("3D");
+  const [episodeTitle, setEpisodeTitle] = useState("");
   const [scenes, setScenes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -33,24 +34,31 @@ export default function FasoFruitsStudio() {
     setLoading(false);
   };
 
-  const generateScenes = () => {
+  const generateScenes = async () => {
     if (!storyIdea.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      const generated = Array.from({ length: 12 }, (_, i) => ({
-        order: i + 1,
-        duration: "6s",
-        visual: `Scène ${i + 1} (${style}) : Illustration cinématographique de "${storyIdea}" - Plan ${i % 2 === 0 ? "rapproché" : "large"}.`,
-        dialogue: `Dialogue français de la scène ${i + 1} synchronisé avec le personnage.`,
-      }));
-      setScenes(generated);
-      setLoading(false);
-    }, 800);
+    setMessage("");
+    try {
+      const res = await fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idea: storyIdea, style }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setMessage(data.error);
+      } else {
+        setEpisodeTitle(data.title || "Épisode Généré");
+        setScenes(data.scenes || []);
+      }
+    } catch (err) {
+      setMessage("Impossible de contacter le serveur IA.");
+    }
+    setLoading(false);
   };
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#0a0a0c", color: "#ffffff", fontFamily: "sans-serif" }}>
-      {/* Barre de navigation */}
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #222" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => setView("home")}>
           <Film color="#f97316" size={28} />
@@ -66,7 +74,6 @@ export default function FasoFruitsStudio() {
         </div>
       </header>
 
-      {/* Page d'accueil */}
       {view === "home" && (
         <main style={{ maxWidth: "800px", margin: "60px auto", padding: "0 20px", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#1f1610", color: "#f97316", padding: "6px 14px", borderRadius: "20px", fontSize: "14px", marginBottom: "20px" }}>
@@ -84,7 +91,6 @@ export default function FasoFruitsStudio() {
         </main>
       )}
 
-      {/* Inscription / Connexion */}
       {view === "auth" && (
         <div style={{ maxWidth: "400px", margin: "60px auto", background: "#141417", padding: "30px", borderRadius: "16px", border: "1px solid #27272a" }}>
           <h2 style={{ marginBottom: "20px", textAlign: "center" }}>Accès Studio FASO FRUITS</h2>
@@ -102,12 +108,11 @@ export default function FasoFruitsStudio() {
         </div>
       )}
 
-      {/* Studio de création (12 scènes) */}
       {view === "studio" && (
         <div style={{ maxWidth: "900px", margin: "30px auto", padding: "0 20px" }}>
           <div style={{ background: "#141417", padding: "24px", borderRadius: "16px", border: "1px solid #27272a", marginBottom: "30px" }}>
             <h2 style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Plus color="#f97316" /> Nouveau Projet Animé
+              <Plus color="#f97316" /> Nouveau Projet Animé (IA Active)
             </h2>
             <textarea
               rows={3}
@@ -116,20 +121,22 @@ export default function FasoFruitsStudio() {
               onChange={(e) => setStoryIdea(e.target.value)}
               style={{ width: "100%", padding: "12px", borderRadius: "8px", background: "#0a0a0c", border: "1px solid #333", color: "#fff", marginBottom: "16px", boxSizing: "border-box" }}
             />
+            {message && <p style={{ color: "#f97316", fontSize: "14px", marginBottom: "12px" }}>{message}</p>}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
               <select value={style} onChange={(e) => setStyle(e.target.value)} style={{ padding: "10px 16px", borderRadius: "8px", background: "#0a0a0c", color: "#fff", border: "1px solid #333" }}>
                 <option value="3D">Animation 3D Cinéma</option>
                 <option value="2D">Dessin Animé 2D</option>
               </select>
               <button onClick={generateScenes} disabled={loading} style={{ background: "#f97316", color: "#fff", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
-                {loading ? "Découpage en cours..." : "Générer les 12 Scènes"}
+                {loading ? "L'IA écrit le scénario..." : "Générer les 12 Scènes avec l'IA"}
               </button>
             </div>
           </div>
 
           {scenes.length > 0 && (
             <div>
-              <h3 style={{ marginBottom: "16px" }}>Découpage de l'épisode (12 scènes × 6s)</h3>
+              <h2 style={{ color: "#f97316", marginBottom: "8px" }}>{episodeTitle}</h2>
+              <p style={{ color: "#a1a1aa", marginBottom: "20px", fontSize: "14px" }}>Découpage officiel de l'épisode (12 scènes × 6s)</p>
               <div style={{ display: "grid", gap: "16px" }}>
                 {scenes.map((scene) => (
                   <div key={scene.order} style={{ background: "#141417", padding: "16px", borderRadius: "12px", border: "1px solid #27272a" }}>
@@ -148,5 +155,5 @@ export default function FasoFruitsStudio() {
       )}
     </div>
   );
-}
-
+      }
+                      
